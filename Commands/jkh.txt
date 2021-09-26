@@ -1,0 +1,2 @@
+${JENKINS_HOME}/workspace/SampleWebApp
+https://github.com/Neymarsaini/SampleWebApp.git

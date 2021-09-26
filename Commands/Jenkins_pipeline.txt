@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    stages {
+        stage('git') {
+            steps {
+                git 'https://github.com/Neymarsaini/hello-world.git'
+            }
+        }
+        stage('build') {
+            steps {
+                sh "mvn clean install"
+            }  
+        stage('Deploy') {
+            steps {
+                sshagent(['deploy-user']) {
+                scp <src_file> username@ip:<dest_path>
+                  
+            }        
+        }   
+    }
+}
+
+
+
+amazon-linux-extras install epel -y

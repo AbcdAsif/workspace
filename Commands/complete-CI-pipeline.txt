@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+	tools {
+	    maven "3.6.3"
+	 	}
+	stages {
+	    stage('Git CheckOut') {
+		    steps {
+			   git branch: 'main', cre0dentialsId: 'My private token login creds', url: 'https://github.com/NeymarSaini/WebAppForJenkins.git'
+			}
+		}
+        stage('Clean and Install') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+        stage ('Package'){
+            steps {
+                sh 'mvn package'
+             }
+        }
+	stage ('Server'){
+            steps {
+               rtServer (
+                 id: "Artifactory",
+                 url: 'http://localhost:8082/artifactory',
+                 username: 'neymar',
+                  password: 'YouPasswordHere',
+                  bypassProxy: true,
+                   timeout: 300
+                        )
+            }
+        }
+        stage('Upload'){
+            steps{
+                rtUpload (
+                 serverId:"Artifactory" ,
+                  spec: '''{
+                   "files": [
+                      {
+                      "pattern": "*.war",
+                      "target": "logic-ops-lab-libs-snapshot-local"
+                      }
+                            ]
+                           }''',
+                        )
+            }
+        }
+        stage ('Publish build info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: "Artifactory"
+                )
+            }
+        }
+        stage('SonarQube analysis') {
+           def scannerHome = tool 'sonarqube';
+           withSonarQubeEnv('sonarqube') {
+            sh "${scannerHome}/bin/sonar-scanner \
+           -D sonar.login=admin \
+           -D sonar.password=Noida@1a \
+           -D sonar.projectKey=jenkinsproject \
+           -D sonar.exclusions=vendor/**,resources/**,**/*.java \
+           -D sonar.host.url=http://65.1.106.233:9000/"
+    }
+}

@@ -1,0 +1,12 @@
+https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+yum install git python python-level python-pip ansible openssl -y
+
+vi /etc/ansible/hosts
+
+vi /etc/ansible/ansible.cfg
+
+
+ansible ALL=(ALL) NOPASSWD: ALL
+
+jre-1.8.0-openjdk-1.8.0.302.b08-0.amzn2.0.1.x86_64cd ..

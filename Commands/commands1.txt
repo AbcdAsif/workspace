@@ -1,0 +1,109 @@
+First, let's identify the node in which the pod called static-greenbox is created. To do this, run:
+root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+default       static-greenbox-node01                 1/1     Running   0          19s     10.244.1.2   node01       <none>           <none>
+root@controlplane:~#
+From the result of this command, we can see that the pod is running on node01.
+
+
+Next, SSH to node01 and identify the path configured for static pods in this node.
+Important: The path need not be /etc/kubernetes/manifests. Make sure to check the path configured in the kubelet configuration file.
+root@controlplane:~# ssh node01 
+root@node01:~# ps -ef |  grep /usr/bin/kubelet 
+root       752   654  0 00:30 pts/0    00:00:00 grep --color=auto /usr/bin/kubelet
+root     28567     1  0 00:22 ?        00:00:11 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/lib/kubelet/config.yaml --network-plugin=cni --pod-infra-container-image=k8s.gcr.io/pause:3.2
+root@node01:~# grep -i staticpod /var/lib/kubelet/config.yaml
+staticPodPath: /etc/just-to-mess-with-you
+root@node01:~# 
+Here the staticPodPath is /etc/just-to-mess-with-you
+
+
+Navigate to this directory and delete the YAML file:
+root@node01:/etc/just-to-mess-with-you# ls
+greenbox.yaml
+root@node01:/etc/just-to-mess-with-you# rm -rf greenbox.yaml 
+root@node01:/etc/just-to-mess-with-you#
+Exit out of node01 using CTRL + D or type exit. You should return to the controlplane node. Check if the static-greenbox pod has been deleted:
+root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+root@controlplane:~# 
+
+------------------------------------------------------------------------------------------------------------------------------
+
+Copy kube-scheduler.yaml from the directory /etc/kubernetes/manifests/ to any other location and then change the name to my-scheduler.
+
+Add or update the following command arguments in the YAML file:
+
+- --leader-elect=false
+- --port=10282
+- --scheduler-name=my-scheduler
+- --secure-port=0
+Here, we are setting leader-elect to false for our new custom scheduler called my-scheduler.
+
+We are also making use of a different port 10282 which is not currently in use in the controlplane.
+
+The default scheduler uses secure-port on port 10259 to serve HTTPS with authentication and authorization. This is not needed for our custom scheduler, so we can disable HTTPS by setting the value of secure-port to 0.
+
+
+Finally, because we have set secure-port to 0, replace HTTPS with HTTP and use the correct ports under liveness and startup probes.
+
+The final YAML file would look something like this:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    component: my-scheduler
+    tier: control-plane
+  name: my-scheduler
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - kube-scheduler
+    - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
+    - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
+    - --bind-address=127.0.0.1
+    - --kubeconfig=/etc/kubernetes/scheduler.conf
+    - --leader-elect=false
+    - --port=10282
+    - --scheduler-name=my-scheduler
+    - --secure-port=0
+    image: k8s.gcr.io/kube-scheduler:v1.19.0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10282
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 15
+    name: kube-scheduler
+    resources:
+      requests:
+        cpu: 100m
+    startupProbe:
+      failureThreshold: 24
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10282
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 15
+    volumeMounts:
+    - mountPath: /etc/kubernetes/scheduler.conf
+      name: kubeconfig
+      readOnly: true
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/scheduler.conf
+      type: FileOrCreate
+    name: kubeconfig
+status: {}
+Run kubectl create -f my-scheduler.yaml and wait sometime for the container to be in running state.

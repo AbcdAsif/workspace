@@ -1,0 +1,32 @@
+---
+  - name: Install and configure tomcat
+    hosts: 
+    gather_facts: false
+    vars:
+      java_v: java-1.8.0-openjdk
+      tomcat_port: 8181
+      tomcat_version: 8.5.55
+      tomcat_url: "https://mirror.csclub.uwaterloo.ca/apache/tomcat/tomcat-{{tomcat_version.split('.')[0]}}/v{{tomcat_version}}/bin/apache-tomcat-{{tomcat_version}}.tar.gz"
+    become: yes
+    tasks:
+     - name: Updating repos
+       yum:
+         name: "*"
+         state: latest
+     - name: Installing Openjdk
+       yum:
+         name: "{{java_v}}"
+         state: present 
+     - name: Downloading tomcat
+       get_url:
+         url: "{{tomcat_url}}"
+         dest: /usr/local
+     - name: Extracting downloaded tar file
+       unarchive:
+         src: "/usr/local/apache-tomcat-{{tomcat_version}}.tar.gz"  
+         dest: /usr/local
+         remote_src: yes
+     - name: Renaming tomcat home
+       command: mv /usr/local/apache-tomcat-{{tomcat_version}} /usr/local/tomcat
+    - name: Starting tomcat
+      shell: nohup /usr/local/tomcat/bin/startup.sh &

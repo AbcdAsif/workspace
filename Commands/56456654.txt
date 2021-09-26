@@ -1,0 +1,29 @@
+node{
+    def buildNumber = BUILD_NUMBER
+    stage('SCM Checkout'){
+		git url: 'https://github.com/Neymarsaini/java-web-app-docker.git',branch: 'master'
+    }
+    
+    stage(" Maven Clean Package"){
+        sh "mvn clean install"
+    }
+    
+    stage('Build Docker Image'){
+        sh "docker rmi harshadsaini/java-web-app-docker"
+        timeout: 30
+        sh "docker build -t harshadsaini/java-web-app-docker ."
+    }
+    
+    stage('Push Docker Image'){
+        withCredentials([string(credentialsId: 'docker-pass-user-jenkins', variable: 'docker_hub_pass')]) {
+            sh "docker login -u harshadsaini -p ${docker_hub_pass}" 
+        }
+            sh 'docker push harshadsaini/java-web-app-docker'
+    }    
+    stage ('DEploy application in deployment server') {
+        sshagent(['docker-dev-server-ssh']) {
+            sh "ssh -o StrictHostKeyChecking=no ec2-user@172.31.36.106 docker rm -f javawebappcontainer || true"
+            sh "ssh -o StrictHostKeyChecking=no ec2-user@172.31.36.106 docker run -d -p 8080:8080 --name javawebappcontainer harshadsaini/java-web-app-docker  "
+     }
+   }    
+}

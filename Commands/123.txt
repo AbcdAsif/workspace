@@ -1,0 +1,72 @@
+kubectl create ns dev-ns
+kubectl config set-context $(kubectl config current-context) --namespace=
+
+kubeadm upgrade plan
+
+
+kubectl describe node node01 | grep -i taints
+kubectl taint nodes node01 spray=mortein:NoSchedule
+kubectl top node          --- monitering 
+kubectl drain node01 --ignore-daemonsets
+kubectl uncordon node01  
+kubectl cordon node01     ----- makes sure that no new pods are created on the node01
+
+
+kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue
+
+kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123
+
+kubectl get all -A
+
+kubectl run nginx --image nginx
+kubectl run redis --image redis:alpine --labels="tier=db"
+kubectl run lab-pod --image=nginx --port=80 --labels="app=web,env=dev" --generator=run-pod/v1
+kubectl run custom-nginx --image=nginx --port=8080
+kubectl edit pod nginx
+kubectl apply
+kubectl get pods --selector env=dev --no-headers | wc -l
+ kubectl get pods -o wide
+kubectl describe pod elephant  | grep -A5 State
+kubectl replace -f elephant.yaml --force
+kubectl get pod orange -o yaml > /root/orange.yaml
+kubectl create -f /root/orange.yaml
+
+kubectl describe daemonset kube-flannel-ds --namespace=kube-system
+
+kubectl create deployment my-dep --image=nginx --replicas=3
+kubectl create deployment redis-deploy --image redis --namespace=dev-ns --dry-run=client -o yaml > deploy.yaml
+
+
+kubectl replace -f replicaset-definition.yml
+kubectl scale --replicas=6 -f replicaset-definition.yml
+kubectl scale --replicas=6 replicaset myapp-replicaset
+
+
+kubectl run nginx --image nginx -n finance
+kubectl get pods --namespace=research
+kubectl get pods --all-namespaces
+
+ps -aux | grep kubelet | grep --color network-plugin=       -------- to check network plugin 
+ls /etc/cni/net.d/           ----- to check CNI plugin name
+
+
+
+grep -i staticpod /var/lib/kubelet/config.yaml
+
+kubectl run --restart=Never --image=busybox static-busybox --dry-run=client -o yaml --command -- sleep 1000 > /etc/kubernetes/manifests/static-busybox.yaml
+
+kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+
+kubectl -n elastic-stack exec -it app -- cat /log/app.log
+
+
+apt install kubeadm=1.20.0-00
+kubeadm upgrade apply v1.20.0
+apt install kubelet=1.20.0-00
+systemctl restart kubelet
+
+
+kubectl get ingress --all-namespaces
+
+
+kubectl exec webapp -- cat /log/app.log    -------  to see the logs

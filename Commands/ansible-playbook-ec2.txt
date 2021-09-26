@@ -1,0 +1,18 @@
+- name: Ec2 launcher
+  hosts: localhost
+  connection: local
+  tasks:
+          - name: launching ec2
+            ec2:
+              instance_type: t2.micro
+              key_name: GITUBU
+              image: ami-04db49c0fb2215364
+              region: ap-south-1
+              group: default
+              count: 2
+              vpc_subnet_id: subnet-0fc92164
+              wait: yes
+              assign_public_ip: yes
+
+
+
