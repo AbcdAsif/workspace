@@ -13,7 +13,7 @@ modify the same value at   /etc/sysctl.conf    to 1
 
 netstat -plnt
 
-netstat -anp | grep etcd | grep 2379 | wc -l
+netstat -anp | grep etcd | grep 2379 | wc -l         ------- to check client connections established with etcd
 
 cat >> /etc/hosts    --- the host will check at this location first to resolve the IP address of the target
 
@@ -73,6 +73,7 @@ iptables -nvL -t nat         ------------   how to check NAT rule which helps to
 --------------------------------------------------------------
 CNI
 
+ps -aux | grep kubelet       ------------ to check network plugin configured
 opt/cni/bin       -------------------CNI binaries location 
 ls /etc/cni/net.d/     -------------  which is the CNI plugin configured to be used 
                                                    on this kubernetes cluster
@@ -89,6 +90,14 @@ iptables -L -t net | grep db-service
 cat /var/log/kube-proxy.log
 
 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range 
+
+---------------------------------------------------------------------
+
+Core - DNS
+
+kubectl -n kube-system describe deployments.apps coredns | grep -A2 Args | grep Corefile
+
+kubectl exec -it hr -- nslookup mysql.payroll > /root/CKA/nslookup.out
 
 
 
