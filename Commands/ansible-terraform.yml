@@ -1,0 +1,16 @@
+- name: Install Jenkins
+  hosts: localhost
+  gather_facts: true
+  become: true
+  tasks:
+          - name: download terraform link
+            shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+          - name: adding repos
+            shell: sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+          - name: install terraform
+            apt:
+                    name: terraform
+                    state: present
+  

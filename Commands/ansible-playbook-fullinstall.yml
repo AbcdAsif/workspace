@@ -1,0 +1,99 @@
+---
+- name: Install Dependencies 
+  hosts: localhost
+  gather_facts: true
+  become: true
+  tasks:
+          - name: install openjdk
+            apt:
+                    name: default-jre
+                    state: present
+          - name: download jenkins.repo
+            shell: wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+
+          - name: import jenkins key
+            shell: sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+
+          - name: Update
+            shell: sudo apt update
+
+          - name: install jenkins
+            apt:
+                    name: jenkins
+                    state: present
+          - name: start jenkins
+            shell: sudo systemctl start jenkins
+
+          - name: sleep for 30 seconds and continue with play
+            wait_for: timeout=30
+            delegate_to: localhost
+          - name: init password jenkin
+            shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+            changed_when: false
+            register: result
+          - name: print password jenkins
+            debug:
+                    var: result.stdout
+
+          - name: sleep for 10 seconds and continue with play
+            wait_for: timeout=10
+            delegate_to: localhost
+
+
+          - name: download terraform link
+            shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+          - name: adding repos
+            shell: sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+          - name: install terraform
+            apt:
+                    name: terraform
+                    state: present
+  
+
+          - name: sleep for 10 seconds and continue with play
+            wait_for: timeout=10
+            delegate_to: localhost
+
+          - name: download helm
+            shell: curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+
+          - name: transport
+            shell: sudo apt-get install apt-transport-https --yes
+
+          - name: echo
+            shell: echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+
+          - name: update
+            shell: sudo apt-get update
+
+          - name: install helm
+            shell: sudo apt-get install helm
+
+          - name: install azure-cli
+            apt:
+                    name: azure-cli
+                    state: present          
+
+          - name: download kubectl
+            shell: sudo apt-get install -y apt-transport-https ca-certificates curl
+
+          - name: update repos
+            shell: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+          - name: echo
+            shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+          - name: update
+            shell: sudo apt-get update
+
+          - name: install kubectl
+            shell: sudo apt-get install -y kubectl
+
+          - name: install docker 
+            apt:
+                    name: docker
+                    state: latest 
+
+           

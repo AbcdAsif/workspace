@@ -6,24 +6,24 @@
   tasks:
           - name: install openjdk
             apt:
-                    name: java-1.8.0-openjdk
+                    name: default-jre
                     state: present
           - name: download jenkins.repo
-            get_url:
-                    url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
-                    dest: /etc/yum.repos.d/jenkins.repo
+            shell: wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+
           - name: import jenkins key
-            rpm_key:
-                    state: present
-                    key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+            shell: sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+
+          - name: Update
+            shell: sudo apt update
+
           - name: install jenkins
             apt:
                     name: jenkins
                     state: present
           - name: start jenkins
-            systemd:
-                    name: jenkins
-                    state: started
+            shell: sudo systemctl start jenkins
+
           - name: sleep for 30 seconds and continue with play
             wait_for: timeout=30
             delegate_to: localhost

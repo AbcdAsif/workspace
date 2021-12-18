@@ -1,0 +1,13 @@
+---
+- name: Install Dependencies 
+  hosts: localhost
+  gather_facts: true
+  become: true
+  tasks:
+          - name: Update
+            shell: sysctl -w vm.max_map_count=524288 | sysctl -w fs.file-max=131072 | ulimit -n 131072 | ulimit -u 8192
+
+          - name: install jenkins
+            apt:
+                    name: jenkins
+                    state: present

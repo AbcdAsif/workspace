@@ -1,2 +1,5 @@
 ${JENKINS_HOME}/workspace/SampleWebApp
 https://github.com/Neymarsaini/SampleWebApp.git
+
+
+az login --service-principal --username "215a36f7-2b22-4df5-9b7d-29256f5a7045" --password "q1-lzGtdY0RGs1.J7wExyx6H_AMWpt.L-n" --tenant "c054a331-2c50-41ed-8441-da5981b27b7a"

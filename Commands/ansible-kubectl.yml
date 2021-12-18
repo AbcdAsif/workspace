@@ -1,0 +1,19 @@
+- name: Install kubectl
+  hosts: localhost
+  gather_facts: true
+  become: true
+  tasks:
+          - name: download kubectl
+            shell: sudo apt-get install -y apt-transport-https ca-certificates curl
+
+          - name: update repos
+            shell: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+          - name: echo
+            shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+          - name: update
+            shell: sudo apt-get update
+
+          - name: install kubectl
+            shell: sudo apt-get install -y kubectl
